@@ -8,13 +8,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $email = $_POST['email'];
 
-    $sql = "INSERT INTO users (username, password, email, is_active) VALUES (?, ?, ?, 0)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sss", $username, $password, $email);
-    $stmt->execute();
+    // تأكد من أن الحقول ليست فارغة
+    if (empty($username) || empty($password) || empty($email)) {
+        echo "All fields are required.";
+        exit();
+    }
 
-    header("Location: login.php?registration=success");
-    exit();
+    // معالجة الأخطاء
+    try {
+        $sql = "INSERT INTO users (username, password, email, is_active, role) VALUES (?, ?, ?, 0, 'user')";
+        $stmt = $conn->prepare($sql);
+
+        if ($stmt === false) {
+            throw new Exception("Failed to prepare statement: " . $conn->error);
+        }
+
+        $stmt->bind_param("sss", $username, $password, $email);
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to execute statement: " . $stmt->error);
+        }
+
+        header("Location: login.php?registration=success");
+        exit();
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage();
+        exit();
+    }
 }
 ?>
 
