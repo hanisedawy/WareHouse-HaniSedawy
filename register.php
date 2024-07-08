@@ -1,31 +1,20 @@
-<!-- login.php -->
+<!-- register.php -->
 <?php
 include 'db.php';
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
-    $password = $_POST['password'];
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $email = $_POST['email'];
 
-    $sql = "SELECT * FROM users WHERE username = ?";
+    $sql = "INSERT INTO users (username, password, email, is_active) VALUES (?, ?, ?, 0)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $username);
+    $stmt->bind_param("sss", $username, $password, $email);
     $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
 
-    if ($user && password_verify($password, $user['password'])) {
-        if ($user['is_active'] == 1) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['role'] = $user['role'];
-            header("Location: index.php");
-            exit();
-        } else {
-            $error = "Your account is not activated. Please contact the administrator.";
-        }
-    } else {
-        $error = "Invalid username or password.";
-    }
+    header("Location: login.php?registration=success");
+    exit();
 }
 ?>
 
@@ -34,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Warehouse Management System</title>
+    <title>Register - Warehouse Management System</title>
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
@@ -47,16 +36,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </nav>
     </div>
     <div class="container">
-        <h2>Login</h2>
-        <?php if (isset($error)) { echo "<p style='color: red;'>$error</p>"; } ?>
-        <form method="POST" action="login.php">
+        <h2>Register</h2>
+        <form method="POST" action="register.php">
             <label>Username:</label>
             <input type="text" name="username" required>
             <br>
             <label>Password:</label>
             <input type="password" name="password" required>
             <br>
-            <button type="submit">Login</button>
+            <label>Email:</label>
+            <input type="email" name="email" required>
+            <br>
+            <button type="submit">Register</button>
         </form>
     </div>
     <div class="footer">
